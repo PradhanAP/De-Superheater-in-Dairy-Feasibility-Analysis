@@ -1,0 +1,77 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Function to calculate heat recovery potential
+def calculate_heat_recovery(thermal_energy_consumption, hvac_capacity, recovery_efficiency=0.85):
+    """
+    Function to calculate the amount of heat that can be recovered
+    based on the HVAC capacity and thermal energy consumption.
+    
+    Parameters:
+    thermal_energy_consumption (float): Total thermal energy consumption of the plant (in MJ)
+    hvac_capacity (float): The HVAC (cold storage) capacity of the plant (in kW)
+    recovery_efficiency (float): Efficiency of heat recovery system (default is 85%)
+    
+    Returns:
+    float: Amount of thermal energy recovered (in MJ)
+    """
+    # HVAC capacity in MJ/h = hvac_capacity (kW) * 3.6 (MJ/kWh)
+    hvac_capacity_mj_per_hour = hvac_capacity * 3.6
+    
+    # Calculate the total possible recoverable energy, constrained by both consumption and HVAC capacity
+    total_recoverable_energy = min(thermal_energy_consumption, hvac_capacity_mj_per_hour * 24 * 365)  # Per year
+    
+    # Apply recovery efficiency
+    recoverable_energy = total_recoverable_energy * recovery_efficiency
+    
+    return recoverable_energy
+
+# Function to estimate cost savings
+def estimate_cost_savings(thermal_energy_consumption, energy_cost_per_mj, recoverable_energy):
+    """
+    Function to estimate the cost savings from implementing a de-superheater.
+    
+    Parameters:
+    thermal_energy_consumption (float): Total thermal energy consumption of the plant (in MJ)
+    energy_cost_per_mj (float): The cost of energy per MJ (in currency unit, e.g., NPR/MJ)
+    recoverable_energy (float): The amount of energy recovered (in MJ)
+    
+    Returns:
+    float: Estimated cost savings (in currency unit)
+    """
+    # Calculate the cost savings based on the recovered energy
+    cost_savings = recoverable_energy * energy_cost_per_mj
+    
+    return cost_savings
+
+# Simulation Parameters
+thermal_energy_consumption = 25_000_000  # in MJ/year
+hvac_capacity = 1500  # in kW (cold storage capacity)
+energy_cost_per_mj = 0.50  # in NPR/MJ (energy cost)
+
+# Calculate the recoverable energy
+recoverable_energy = calculate_heat_recovery(thermal_energy_consumption, hvac_capacity)
+
+# Estimate cost savings
+cost_savings = estimate_cost_savings(thermal_energy_consumption, energy_cost_per_mj, recoverable_energy)
+
+# Output Results
+print(f"Total Thermal Energy Consumption: {thermal_energy_consumption} MJ/year")
+print(f"HVAC Capacity: {hvac_capacity} kW")
+print(f"Recoverable Energy with De-Superheater: {recoverable_energy:.2f} MJ/year")
+print(f"Estimated Cost Savings: NPR {cost_savings:.2f}/year")
+
+# Visualization - Scenario with different HVAC capacities
+hvac_capacities = np.linspace(500, 3000, 100)  # Vary HVAC capacities from 500 kW to 3000 kW
+recoverable_energies = [calculate_heat_recovery(thermal_energy_consumption, hvac, recovery_efficiency=0.85) for hvac in hvac_capacities]
+cost_savings_scenarios = [estimate_cost_savings(thermal_energy_consumption, energy_cost_per_mj, recoverable_energy) for recoverable_energy in recoverable_energies]
+
+# Plotting the cost savings vs HVAC capacities
+plt.figure(figsize=(10,6))
+plt.plot(hvac_capacities, cost_savings_scenarios, label='Cost Savings (NPR/year)', color='blue', linewidth=2)
+plt.title("Cost Savings from De-Superheater vs HVAC Capacity", fontsize=14)
+plt.xlabel("HVAC Capacity (kW)", fontsize=12)
+plt.ylabel("Cost Savings (NPR/year)", fontsize=12)
+plt.grid(True)
+plt.legend()
+plt.show()
